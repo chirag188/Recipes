@@ -6,6 +6,8 @@ import { map } from "rxjs/operators";
 import { AuthService } from '../auth/auth.service';
 import { RecipeService } from '../recipes/recipe.service';
 import * as fromApp from '../app.reducer';
+import * as AuthActions from '../auth/auth.reducer';
+import * as RecipesActions from '../recipes/recipes.reducer';
 import { DataStorageService } from '../shared/data-storage.service';
 
 @Component({
@@ -36,13 +38,16 @@ export class HeaderComponent implements OnInit,OnDestroy{
     this.featureSelected.emit(feature);
   }
   saveRecipes(){
-    this.recipeService.storeRecipesToServer();
+    // this.recipeService.storeRecipesToServer();
+    this.store.dispatch(new RecipesActions.StoreRecipe());
   }
   onLogout(){
-    this.authSerivce.logout();
+    this.store.dispatch(new AuthActions.LogOut());
+    // this.authSerivce.logout();
   }
   fetchRecipes(){
-    this.dataStorageService.fetchRecipes().subscribe();
+    // this.dataStorageService.fetchRecipes().subscribe();
+    this.store.dispatch(new RecipesActions.FetchRecipes());
   }
   ngOnDestroy(){
     this.usersub.unsubscribe();

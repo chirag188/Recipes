@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';  
+import { Store } from '@ngrx/store';
 import { AuthService } from './auth/auth.service';
+import * as fromApp from './app.reducer';
+import * as AuthActions from './auth/auth.reducer';
 // import { IpServiceService } from './ip-service.service';  
 
 @Component({
@@ -14,10 +17,11 @@ export class AppComponent implements OnInit {
   // constructor(private ip:IpServiceService){}  
   // ipAddress!:string;  
   // title = 'DemoApp';  
-  constructor(private authService:AuthService){};
+  constructor(private authService:AuthService,private store:Store<fromApp.AppState>){};
   ngOnInit()  
     {
-      this.authService.autoLogin();
+      // this.authService.autoLogin();
+      this.store.dispatch(new AuthActions.AutoLogin());
       // this.getIP();  
     }  
     // getIP()  

@@ -1,10 +1,13 @@
 import { Component, ComponentFactoryResolver, OnDestroy, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
 import { Observable, Subscription } from 'rxjs';
 import { AlertComponent } from '../shared/alert/alert/alert.component';
 import { PlaceholderDirective } from '../shared/placeholder/placeholder.directive';
 import { AuthService,AuthResponseData } from './auth.service';
+import * as fromApp from "../app.reducer";
+import * as AuthActions from "./auth.reducer";
 
 @Component({
   selector: 'app-auth',
@@ -17,9 +20,21 @@ export class AuthComponent implements OnInit,OnDestroy {
   isLoading = false;
   error = "";
   closesub!:Subscription;
-  constructor(private authService:AuthService,public viewContainerRef:ViewContainerRef,private router:Router,private componentFactoryResolver:ComponentFactoryResolver) { }
+  storesub!:Subscription;
+  constructor(private authService:AuthService,
+    public viewContainerRef:ViewContainerRef,
+    private router:Router,
+    private componentFactoryResolver:ComponentFactoryResolver,
+    private store:Store<fromApp.AppState>) { }
 
   ngOnInit(): void {
+    this.storesub = this.store.select('auth').subscribe(authState => {
+      this.isLoading = authState.loading;
+      this.error = authState.authError;
+      if(this.error){
+        this.showErrorAlert(this.error);
+      }
+    });
   }
   switch(){
     this.isLoginMode=!this.isLoginMode;
@@ -27,29 +42,37 @@ export class AuthComponent implements OnInit,OnDestroy {
   }
   onSubmit(form:NgForm){
     this.isLoading = true;
-    let authObs:Observable<AuthResponseData>;
-    if(!this.isLoginMode){
-      authObs = this.authService.signup(form.value.email,form.value.password);
+    let authObs:Observable<AuthResponseData> = null as any;
+    AuthActions.AuthenticateSuccess.redirect = true;
+    if(this.isLoginMode){
+      // authObs = this.authService.login(form.value.email,form.value.password);
+      AuthActions.LoginStart.email = form.value.email;
+      AuthActions.LoginStart.password = form.value.password;
+      this.store.dispatch(new AuthActions.LoginStart());
     } else {
-      authObs = this.authService.login(form.value.email,form.value.password);
+      AuthActions.SignupStart.email = form.value.email;
+      AuthActions.SignupStart.password = form.value.password;
+      this.store.dispatch(new AuthActions.SignupStart());
+      // authObs = this.authService.signup(form.value.email,form.value.password);
     }
-    authObs.subscribe(responseData => {
-      // this.router.navigate(["/recipes"]);
-      this.isLoading = false;
-    }
-    ,errorRes => {
-      this.error = errorRes;
-      this.showErrorAlert(this.error);
-      this.isLoading = false;
-    });
+    // authObs.subscribe(responseData => {
+    //   // this.router.navigate(["/recipes"]);
+    //   this.isLoading = false;
+    // }
+    // ,errorRes => {
+    //   this.error = errorRes;
+    //   this.showErrorAlert(this.error);
+    //   this.isLoading = false;
+    // });
     form.reset();
   }
   onHandleError(){
-    this.error = "";
+    // this.error = "";
+    this.store.dispatch(new AuthActions.ClearError());
   }
   showErrorAlert(message:string){
     const alertcmpfactory = this.componentFactoryResolver.resolveComponentFactory(AlertComponent);
-    const hostViewContainerRef = this.alertHost.viewContainerRef;
+    const hostViewContainerRef = this.viewContainerRef;
     hostViewContainerRef.clear();
     const componentRef =  hostViewContainerRef.createComponent(alertcmpfactory);
     componentRef.instance.message = message;
@@ -61,6 +84,9 @@ export class AuthComponent implements OnInit,OnDestroy {
   ngOnDestroy(){
     if(this.closesub){
       this.closesub.unsubscribe();
+    }
+    if(this.storesub){
+      this.storesub.unsubscribe();
     }
   }
 }
