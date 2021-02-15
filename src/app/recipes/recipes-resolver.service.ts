@@ -5,6 +5,7 @@ import {
   RouterStateSnapshot
 } from '@angular/router';
 import * as fromApp from '../app.reducer';
+import * as AuthActions from '../auth/auth.reducer';
 import * as RecipesActions from './recipes.reducer';
 import { Recipes } from './recipes.model';
 import { DataStorageService } from '../shared/data-storage.service';
@@ -38,6 +39,7 @@ export class RecipesResolverService implements Resolve<Recipes[]> {
     }),
     switchMap(recipes => {
       if(recipes.length === 0){
+        this.store.dispatch(new AuthActions.AutoLogin());
         this.store.dispatch(new RecipesActions.FetchRecipes());
         return this.action$.pipe(ofType(RecipesActions.SET_RECIPES),take(1));
       } else {

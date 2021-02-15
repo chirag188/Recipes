@@ -21,7 +21,6 @@ export class RecipesListComponent implements OnInit {
     .pipe(map(recipesState => recipesState.recipes))
     .subscribe(
       (recipe:Recipes[]) => {
-        
         this.recipes = recipe;
     });
     // this.recipes = this.recipeService.getRecipes();
